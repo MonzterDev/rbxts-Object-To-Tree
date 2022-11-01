@@ -1,3 +1,10 @@
+# Info
+
+This fork includes an **auto exporting** feature, which will export most of the commonly used Services every second.
+
+1. Click TS types
+2. Click Auto Export
+
 # roblox-ts object-to-tree
 
 You can install this [plugin here](https://www.roblox.com/library/3379119778/rbxts-object-to-tree).

@@ -11,19 +11,19 @@ export = function () {
 	} else {
 		new Feedback("Fetching API data...");
 		// alternative "https://anaminus.github.io/rbx/json/api/latest.json"
-		const request = opcall(() =>
+		const request = pcall(() =>
 			HttpService.GetAsync(
 				"https://raw.githubusercontent.com/CloneTrooper1019/Roblox-Client-Watch/roblox/API-Dump.json",
 			),
 		);
 
-		if (request.success) {
-			const apiRequest = opcall(() => HttpService.JSONDecode(request.value) as ApiDump);
+		if (request[0]) {
+			const apiRequest = pcall(() => HttpService.JSONDecode(request[1]) as ApiDump);
 
-			if (apiRequest.success) {
+			if (apiRequest[0]) {
 				const dumpMap = new Map<string, ApiClass>();
 
-				for (const rbxClass of apiRequest.value.Classes) {
+				for (const rbxClass of apiRequest[1].Classes) {
 					const superclass = dumpMap.get(rbxClass.Superclass);
 					if (superclass) {
 						for (const rbxMember of superclass.Members) {

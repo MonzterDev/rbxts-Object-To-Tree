@@ -60,7 +60,7 @@ function createTopLevelInterface({ ClassName: className, Name: name }: Instance)
 		case "StarterCharacterScripts":
 			return "interface StarterCharacterScripts extends StarterPlayerScripts";
 		case "ReplicatedFirst":
-			warn("Instances in ReplicatedFirst are not guaranteed to exist immediately! Beware!");
+			// warn("Instances in ReplicatedFirst are not guaranteed to exist immediately! Beware!");
 		case "Lighting":
 		case "ReplicatedStorage":
 		case "ServerScriptService":
@@ -146,11 +146,11 @@ function getValidName(desiredName: string, parent: Instance) {
 
 /** Publishes a slice of a string, which should be maximum 19_999 characters */
 function publishSlice(name: string, slice: string, parent: Instance) {
-	const script = new Instance("Script");
-	script.Source = slice;
-	script.Name = getValidName(name, parent);
-	script.Parent = parent;
-	return script;
+	const theScript = new Instance("Script");
+	theScript.Source = slice;
+	theScript.Name = getValidName(name, parent);
+	theScript.Parent = parent;
+	return theScript;
 }
 
 /** Writes output to Script objects inside of Lighting */
@@ -179,7 +179,7 @@ function writeToIoServe(name: string, source: string) {
 		Method: "PUT",
 		Body: source,
 	});
-	new Feedback(`Wrote to file \`${name}\` in io-serve!`);
+	// new Feedback(`Wrote to file \`${name}\` in io-serve!`);
 }
 
 /** Writes output to io-serve */
@@ -290,11 +290,11 @@ function getDefaultPropertyOfInstanceType<
 >(className: T, property: P): CreatableInstances[T][P] {
 	let defaultObj = defaultObjects[className];
 	if (!defaultObj) {
-		const attempt = opcall(() => new Instance(className));
-		if (attempt.success) {
-			defaultObjects[className] = defaultObj = attempt.value;
+		const attempt = pcall(() => new Instance(className));
+		if (attempt[0]) {
+			defaultObjects[className] = defaultObj = attempt[1];
 		} else {
-			error(attempt.error);
+			error(attempt[1]);
 		}
 	}
 	return defaultObj[property];

@@ -10,7 +10,10 @@ import Feedback from "feedback";
 import { delay } from "@rbxts/delay-spawn-wait";
 
 const HttpService = game.GetService("HttpService");
+const RunService = game.GetService("RunService");
 const Selection = game.GetService("Selection");
+
+let isAutoActive = false
 
 delay(1, () => {
 	const widgetSize = new Vector2(227, 232); // new Vector2(224, 248);
@@ -129,6 +132,23 @@ delay(1, () => {
 	GenerateButton.TextSize = 20;
 	GenerateButton.Parent = GeneratorFrame;
 
+	const AutoButton = new Instance("TextButton");
+	AutoButton.BorderSizePixel = 0;
+	AutoButton.BackgroundTransparency = 0;
+	AutoButton.BackgroundColor3 = Color3.fromRGB(226, 36, 26);
+	AutoButton.Font = Enum.Font.SourceSansBold;
+	AutoButton.Size = new UDim2(.5, 0, 0, 20);
+	AutoButton.AnchorPoint = new Vector2(.5, 0)
+	AutoButton.Position = new UDim2(.5, 0, 0, 230);
+	AutoButton.Text = "Auto Export";
+	AutoButton.TextColor3 = Color3.fromRGB(255, 255, 255);
+	AutoButton.TextSize = 20;
+	AutoButton.Parent = Background;
+
+	const UICorner = new Instance( "UICorner" )
+	UICorner.Parent = AutoButton
+	UICorner.CornerRadius = new UDim(.1)
+
 	const options = new Map<OPTIONS, Radio>();
 
 	function makeOption(option: OPTIONS, order: number) {
@@ -202,16 +222,29 @@ delay(1, () => {
 
 	/** tests to see if io-serve is available */
 	function isIoServeAvailable() {
-		const result = opcall(() => HttpService.RequestAsync({ Url: IO_SERVE_URL, Method: "HEAD" }));
-		return result.success && result.value.StatusCode === 200;
+		const result = pcall(() => HttpService.RequestAsync({ Url: IO_SERVE_URL, Method: "HEAD" }));
+		return result[0] && result[1].StatusCode === 200;
+	}
+
+	function getServices () {
+		const workspace = game.GetService("Workspace")
+		const lighting = game.GetService("Lighting")
+		const replicatedFirst = game.GetService("ReplicatedFirst")
+		const replicatedStorage = game.GetService("ReplicatedStorage")
+		const serverScriptService = game.GetService("ServerScriptService")
+		const serverStorage = game.GetService("ServerStorage")
+		const starterGui = game.GetService("StarterGui")
+		const starterPack = game.GetService("StarterPack")
+		return [workspace, lighting, replicatedFirst, replicatedStorage, serverScriptService, serverStorage, starterGui, starterPack]
 	}
 
 	let generating = false;
 
-	GenerateButton.MouseButton1Click.Connect(() => {
-		if (!generating) {
+	// TODO: Function still runs while testing game, but IsEdit always returns true
+	function generate () {
+		if (!generating ) {
 			generating = true;
-			const selection = Selection.Get();
+			const selection = isAutoActive ? getServices()  : Selection.Get()
 			const selectionSize = selection.size();
 
 			if (0 < selectionSize) {
@@ -229,17 +262,30 @@ delay(1, () => {
 					}
 				}
 
-				if (success && selectionSize !== 1) {
+				if (success && selectionSize !== 1 && !isAutoActive) {
 					new Feedback(
 						useIoServe ? "Sent multiple files to io-serve" : "Generated multiple files in Lighting!",
 					);
 				}
 			} else {
-				new Feedback(`Please select something to generate.`);
+				if (!isAutoActive) new Feedback(`Please select something to generate.`);
 			}
 			generating = false;
 		}
-	});
+	}
+
+	GenerateButton.MouseButton1Click.Connect(() => generate());
+	AutoButton.MouseButton1Click.Connect( () => {
+		isAutoActive = !isAutoActive
+		AutoButton.BackgroundColor3 = isAutoActive ? Color3.fromRGB(43, 227, 26) : Color3.fromRGB(226, 36, 26);
+	})
+
+	task.spawn( () => {
+		while ( true ) {
+			if (isAutoActive) generate()
+			task.wait(1)
+		}
+	})
 
 	Choices.Parent = Background;
 	UIGridLayout.Parent = Choices;
